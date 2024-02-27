@@ -3,10 +3,10 @@
 static const Block blocks[] = {
     /*Icon*/ /*Command*/ /*Update Interval*/ /*Update Signal*/
     /*{"", "sb-pacpackages", 0, 8},*/
-    {"", "cat /tmp/recordingicon 2>/dev/null", 0, 9},
-    {"", "sb-music-spotify", 1, 19}, /* added spotify */
-    {"", "sb-music", 0, 11},
-    {"", "sb-cava", 1, 28},
+    //{"", "cat /tmp/recordingicon 2>/dev/null", 0, 9},
+    {"", "sb-music-scroll", 1, 24},
+    // {"", "sb-cava2", 1, 17},
+    //   {"", "sb-play-btns", 0, 26},
     /*{"",	"sb-tasks",	10,	26},*/ /* pc tasks*/
     /*{"",	"sb-news",		0,	6},*/
     /* {"",	"sb-price xmr-btc \"Monero to Bitcoin\" 🔒 25",	9000,	25}, */
@@ -19,11 +19,11 @@ static const Block blocks[] = {
     {"", "sb-memory", 10, 14},
     {"", "sb-cpu", 5, 18}, */
     {"", "sb-torrent", 20, 7},
-    {"", "sb-kbselect", 0,
+    {"", "sb-kbselect", 1,
      30}, /* ⌨  if you want add this emoji in the first brackets */
     /*{"",	"sb-battery",	5,	3}, */
     {"", "sb-nettraf", 1, 16},
-    {"", "sb-mailbox", 180, 12},
+    {"", "sb-mailbox", 60, 12},
     {"", "sb-volume", 0, 10},
     {"", "sb-forecast", 3600, 5},
     {"", "sb-clock", 60, 1},

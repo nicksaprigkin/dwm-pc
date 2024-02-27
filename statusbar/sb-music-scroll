@@ -1,0 +1,138 @@
+#!/bin/bash
+# make sure you have youtube-dlp and spotdl installed also sb-musicplayers required
+# script that will scroll the title of the audio playing when its playing and nothing when its paused but you can change it to just staticaly have the text when its paused. Also if you left click on it, it will focus on the current player and pause it. If you right click on it, it will start downloading the audio if its from spotify or youtube. (for videos it downloads shit quality because of space but if you want you can change id just uncomment line 82 and comment the line below it or better change the [height=360 to 720 or 1080])
+# 
+# make to increase in dwmblocks.c the #define CMDLENGTH to a number that you want I put 100
+# because if you have too small the max width 35 below will overide the modules to the right sometimes as the text scrolls and then go back to normal again
+# but only for other languages because of bite size of the characters is different than english so yeah dwmblocks stuff
+# english is fine no matter what max_width will work normal but to fix the bug with the other languages you need to increase the CMDLENGTH so it doesnt ruin the bar
+#
+# *** If you have a problem where the text overflows to the right and then goes back to normal again, increase the CMDLENGTH in dwmblocks.c to a higher number or decrease the max_width below to a smaller number ***
+#
+
+cmd="${0%/*}/sb-musicplayers $1" # Path to the sb-musicplayers script put it in the same folder as this script
+position_file="/tmp/scroll_position.txt"
+max_width=30  # Maximum display width for the text
+padding=$(printf ' %.0s' {1..8})  # Adjust padding as needed
+
+# Initialize or read the current position
+current_position=$(cat "$position_file" 2>/dev/null || echo "0")
+
+# Execute the command and save its output
+output_text="$($cmd)"
+player_name="$($cmd "PLAYER" "icon")"
+
+# Retrieve the current artist and title using playerctl
+artist=$(playerctl --player=spotify metadata artist);
+title=$(playerctl --player=spotify metadata title);
+spot_title="${artist} - ${title}";
+
+case $BLOCK_BUTTON in
+    1)
+        #if you want to add players go to the sb-musicplayers
+        #first and add players there or check the existing ones and then add them here too
+        case "$player_name" in
+            "spotify") window_search="spotify" ;;
+            "mpv") window_search="mpv" ;;
+            "mpd") window_search="mpd" ;; 
+            "youtube") window_search="yt" ;; # This might not be straightforward if it's a browser tab
+            "twitch") window_search="twitch" ;;
+            "soundcloud") window_search="SoundCloud" ;;
+            "netflix") window_search="netflix" ;;
+            *) window_search="" ;;
+        esac
+        # with --class for some reason it wasnt focusing on spotify when it was floating
+        # so i use --name when a song is playing if you xprop the name is going to become from spotify to the song name
+        if [ "$window_search" == "spotify" ]; then
+            xdotool windowactivate --sync $(xdotool search --name "$spot_title") key space
+        elif [ "$window_search" == "yt" ]; then
+            xdotool windowactivate --sync $(xdotool search --name "YouTube") key space
+        elif [ "$window_search" == "mpv" ]; then
+            xdotool windowactivate --sync $(xdotool search --class "mpv") key space
+        elif [ "$window_search" == "mpd" ]; then
+            current_song="$(mpc current)"; # found it with xprop ncmpcpp uses the song name as the window name
+            xdotool windowactivate --sync $(xdotool search --name "$current_song") key p # pause
+        elif [ "$window_search" == "twitch" ]; then
+            xdotool windowactivate --sync $(xdotool search --name "Twitch") key space
+        elif [ "$window_search" == "SoundCloud" ]; then
+            xdotool windowactivate --sync $(xdotool search --name "SoundCloud") key space
+        elif [ "$window_search" == "netflix" ]; then
+            xdotool windowactivate --sync $(xdotool search --name "Netflix") key space
+        else
+            playerctl play-pause
+        fi
+        ;;
+        3) 
+        music_dir="$HOME/Music"
+        video_dir="$HOME/Videos"
+        if [ "$player_name" == "spotify" ]; then
+            song_title=$spot_title
+            if [ ! -z "$song_title" ]; then
+                [ ! -d "$music_dir" ] && mkdir -p "$music_dir"
+                metadata=$(playerctl metadata 'xesam:url')
+                # for the "fSt" its floating terminal to have tha -c it means class in the rules in config.h i added the class fSt to be floating
+                setsid -w -f st -c "fSt" -e spotdl --output "$music_dir" "$metadata"; pkill -RTMIN+10 "${STATUSBAR:-dwmblocks}"
+                notify-send "Download completed" "Track '$song_title' has been saved to $music_dir"
+            fi
+        fi
+
+        if [ "$player_name" == "youtube" ]; then
+            xdotool search --name "Youtube" windowactivate --sync key --clearmodifiers ctrl+l ctrl+c
+            url="$(xclip -selection clipboard -o)"
+            #setsid -w -f st -c "fSt" -e yt-dlp "$url" -o "$video_dir/%(title)s.%(ext)s";
+            setsid -w -f st -c "fSt" -e yt-dlp -f "bestvideo[height=720]+bestaudio/best" "$url" -o "$video_dir/%(title)s.%(ext)s";
+        fi
+    ;;
+    6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+output_icon="$($cmd "PLAYER" "icon")"
+case "$output_icon" in
+    "spotify")
+        icon=""
+        ;;
+    "mpd")
+        icon="󰝚"
+        ;;
+    "youtube")
+        icon=""
+        ;;
+    "twitch")
+        icon=""
+        ;;
+    "soundcloud")
+        icon="󰓀"
+        ;;
+    *)
+        icon=""
+        ;;
+esac
+
+# Check for pause status and adjust output accordingly
+# remove the second condition if you want to show no audio text
+if [[ "$output_text" == *ps ]] || [[ "$output_text" == "no audio" ]]; then
+    # If paused, strip the pause symbol and print with a stop icon
+    output_text="${output_text% ps} ⏹️"
+    #uncomment the line below if you want to print the paused
+    #printf "%s" "$output_text"
+else
+    echo -n " $icon  "
+    # For playing status, remove the play symbol and proceed with scrolling
+    output_text="${output_text% pl}"
+    output_text="${output_text}${padding}${output_text}"  # Duplicate and pad for seamless loop
+
+    text_length=${#output_text}
+    effective_length=$((text_length / 2))
+
+    current_position=$((current_position + 1))
+    if [ "$current_position" -ge "$effective_length" ]; then
+        current_position=0
+    fi
+    echo "$current_position" > "$position_file"
+
+    visible_text="${output_text:$current_position:$max_width}"
+    printf "%-${max_width}s\n" "$visible_text"
+fi
+printf "\n"
+
+

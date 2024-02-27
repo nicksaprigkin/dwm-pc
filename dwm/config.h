@@ -1,6 +1,6 @@
-/* See LICENSE file for copyright and license details. */
-
 /* Constants */
+#include <stddef.h>
+#include <stdio.h>
 #define TERMINAL "st"
 #define TERMCLASS "St"
 
@@ -41,14 +41,9 @@ static const int riodraw_spawnasync =
     0; /* 0 means that the application is only spawned after a successful
         * selection while 1 means that the application is being initialised in
         * the background while the selection is made */
-static char *fonts[] = {"monospace:size=24:antialias=true:autohint=true",
-                        "JoyPixels:pixelsize=22:antialias=true:autohint=true"};
-/*
 static char *fonts[] = {
-        "FuraCode NF Regular:size=11:antialias=true:autohint=true",
-        "JoyPixels:pixelsize=10:antialias=true:autohint=true"
-};
-*/
+    "FiraCode Nerd Font:size=14:antialias=true:autohint=true",
+    "JoyPixels:pixelsize=24:antialias=true:autohint=true"};
 
 /* Bar background color */
 static char normbgcolor[] = "#2E3440";
@@ -77,15 +72,25 @@ typedef struct {
   const char *name;
   const void *cmd;
 } Sp;
+//*** Scratchpads from cmd3 and on i added them!
 const char *spcmd1[] = {TERMINAL, "-n", "spterm", "-g", "120x34", NULL};
-const char *spcmd2[] = {TERMINAL, "-n",    "spcalc", "-f", "monospace:size=18",
+const char *spcmd2[] = {TERMINAL, "-n",    "spcalc", "-f", "monospace:size=16",
                         "-g",     "50x20", "-e",     "bc", "-lq",
                         NULL};
+const char *spcmd3[] = {
+    TERMINAL, "-n", "spnvim", "-g", "120x34", "-e",
+    "notes-script", /* its in the .local/bin add enviroment variable in zshrc so
+                    you can just type the name like i do here */
+    /*"nvim", "-c '~/Documents/SecondBrain/",*/
+    NULL};
+const char *spcmd4[] = {TERMINAL, "-n", "spbtop", "-g",
+                        "120x34", "-e", "btop",   NULL};
 static Sp scratchpads[] = {
     /* name          cmd  */
     {"spterm", spcmd1},
-    {"spranger", spcmd2},
     {"spcalc", spcmd2},
+    {"spnvim", spcmd3},
+    {"spbtop", spcmd4},
 };
 
 /* tagging */
@@ -104,14 +109,19 @@ static const Rule rules[] = {
     {NULL, NULL, "cpupower-gui", 0, 1, 0, 0, -1},
     {TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
+    // scratchpads ***
     {NULL, "spterm", NULL, SPTAG(0), 1, 1, 0, -1},
     {NULL, "spcalc", NULL, SPTAG(1), 1, 1, 0, -1},
+    {NULL, "spnvim", NULL, SPTAG(2), 1, 1, 0, -1},
+    {NULL, "spbtop", NULL, SPTAG(3), 1, 1, 0, -1},
+    // floating st
+    {"fSt", NULL, NULL, 0, 1, 1, 0, -1},
 };
 
 /* layout(s) */
 static float mfact = 0.55;  /* factor of master area size [0.05..0.95] */
 static int nmaster = 1;     /* number of clients in master area */
-static int resizehints = 1; /* 1 means respect size hints in tiled resizals */
+static int resizehints = 0; /* 1 means respect size hints in tiled resizals */
 #define FORCE_VSPLIT                                                           \
   1 /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
@@ -160,7 +170,7 @@ static const Layout layouts[] = {
 
 /* commands */
 static const char *termcmd[] = {TERMINAL, NULL};
-static const char *layoutmenu_cmd = "~/.config/scripts/layoutmenu";
+static const char *layoutmenu_cmd = "~/.local/bin/layoutmenu";
 
 /*
  * Xresources preferences to load at startup
@@ -209,20 +219,23 @@ static Key keys[] = {
     /* Assign keys to tags ("containers") */
     TAGKEYS(XK_1, 0) TAGKEYS(XK_2, 1) TAGKEYS(XK_3, 2) TAGKEYS(XK_4, 3)
         TAGKEYS(XK_5, 4) TAGKEYS(XK_6, 5) TAGKEYS(XK_7, 6) TAGKEYS(XK_8, 7)
-            TAGKEYS(XK_9, 8) TAGKEYS(XK_0, 9)
+            TAGKEYS(XK_9, 8){MODKEY, XK_0, view, {.ui = ~0}},
+    {MODKEY | ShiftMask, XK_0, tag, {.ui = ~0}},
 
     /* Set various layouts */
-    {MODKEY, XK_o, setlayout, {.v = &layouts[0]}},             /* tile */
-    {MODKEY | ShiftMask, XK_o, setlayout, {.v = &layouts[1]}}, /* bstack */
-    {MODKEY, XK_y, setlayout, {.v = &layouts[2]}},             /* spiral */
-    {MODKEY | ShiftMask, XK_y, setlayout, {.v = &layouts[3]}}, /* dwindle */
-    {MODKEY, XK_u, setlayout, {.v = &layouts[4]}},             /* deck */
-    {MODKEY | ShiftMask, XK_u, setlayout, {.v = &layouts[5]}}, /* monocle */
-    {MODKEY, XK_i, setlayout, {.v = &layouts[6]}}, /* centeredmaster */
-    {MODKEY | ShiftMask,
-     XK_i,
-     setlayout,
-     {.v = &layouts[7]}}, /* centeredfloatingmaster */
+    {MODKEY, XK_F12, setlayout, {.v = &layouts[0]}},             /* tile */
+    {MODKEY | ShiftMask, XK_F12, setlayout, {.v = &layouts[1]}}, /* bstack */
+    // {MODKEY, XK_y, setlayout, {.v = &layouts[2]}},               /* spiral */
+    // {MODKEY | ControlMask, XK_y, setlayout, {.v = &layouts[3]}}, /* dwindle
+    // */ {MODKEY, XK_u, setlayout, {.v = &layouts[4]}},               /* deck
+    // */
+    {MODKEY, XK_F9, setlayout, {.v = &layouts[5]}},  /* monocle */
+    {MODKEY, XK_F10, setlayout, {.v = &layouts[6]}}, /* centeredmaster */
+    {MODKEY, XK_F11, setlayout, {.v = &layouts[8]}}, /*float mode*/
+                                                     // {MODKEY | ShiftMask,
+                                                     //  XK_i,
+                                                     //  setlayout,
+    //  {.v = &layouts[7]}}, /* centeredfloatingmaster */
 
     /* Switch between active tag and last opened tag */
     {MODKEY, XK_Tab, view, {0}},
@@ -250,7 +263,7 @@ static Key keys[] = {
     {MODKEY | ShiftMask, XK_Page_Down, shifttag, {.i = +1}},
 
     /* [WINDOWS] */
-
+    {MODKEY | ShiftMask, XK_n, setlayout, {.v = &layouts[8]}},
     /* Sticky windows */
     {MODKEY, XK_s, togglesticky, {0}},
 
@@ -267,22 +280,27 @@ static Key keys[] = {
      SHCMD("groff -mom /usr/local/share/dwm/larbs.mom -Tpdf | zathura -")},
     {MODKEY, XK_F2, spawn,
      SHCMD(TERMINAL " -e pulsemixer; kill -44 $(pidof dwmblocks)")},
+
+    {MODKEY, XK_F3, spawn, SHCMD("~/.local/bin/music-launch")},
+    /* Kill a window */
+    {MODKEY, XK_F4, killclient, {0}},
+    // scratchpad for notes and btop(system monitoring)
+    {MODKEY, XK_F5, togglescratch, {.ui = 2}},
+    {MODKEY | ShiftMask, XK_F5, togglescratch, {.ui = 3}},
+
+    {MODKEY, XK_F6, spawn,
+     SHCMD("mpv --untimed --no-cache --no-osc --no-input-default-bindings "
+           "--profile=low-latency --input-conf=/dev/null --title=webcam $(ls "
+           "/dev/video[0,2,4,6,8] | tail -n 1)")},
     {MODKEY, XK_F6, spawn, {.v = (const char *[]){"torwrap", NULL}}},
     /* Show webcam not lukes
     {MODKEY, XK_F7, spawn,
      SHCMD("mpv av://v4l2:/dev/video0 --title=webcam /dev/video0 || "
            "notify-send -u critical 'Webcam' 'Could not open webcam!'")}, */
+
     {MODKEY, XK_F7, spawn, {.v = (const char *[]){"td-toggle", NULL}}},
     {MODKEY, XK_F8, spawn, {.v = (const char *[]){"mailsync", NULL}}},
-    {MODKEY, XK_F9, spawn, {.v = (const char *[]){"mounter", NULL}}},
-    {MODKEY, XK_F10, spawn, {.v = (const char *[]){"unmounter", NULL}}},
-    {MODKEY, XK_F11, spawn,
-     SHCMD("mpv --untimed --no-cache --no-osc --no-input-default-bindings "
-           "--profile=low-latency --input-conf=/dev/null --title=webcam $(ls "
-           "/dev/video[0,2,4,6,8] | tail -n 1)")},
-    {MODKEY, XK_F12, spawn, SHCMD("remaps")},
-    /* Kill a window */
-    {MODKEY, XK_F4, killclient, {0}},
+    // F9 to F12 layouts binds
 
     /* Move window to previous tag */
     {MODKEY | ShiftMask, XK_g, shifttag, {.i = -1}},
@@ -291,13 +309,6 @@ static Key keys[] = {
     {MODKEY, XK_h, setmfact, {.f = -0.05}},
     /* Resize window right (make it bigger) */
     {MODKEY, XK_l, setmfact, {.f = +0.05}},
-
-    /* Resize window up (make it taller) */
-    {MODKEY | ControlMask, XK_h, setcfact, {.f = +0.25}},
-    /* Resize window down (make it shorter) */
-    {MODKEY | ControlMask, XK_l, setcfact, {.f = -0.25}},
-    /* Reset window height */
-    {MODKEY | ControlMask, XK_o, setcfact, {.f = 0.00}},
 
     /* Resize window like Plan9's rio (Rio-Resize patch) */
     {MODKEY, XK_r, rioresize, {0}},
@@ -324,7 +335,8 @@ static Key keys[] = {
 
     /* [DWM] */
     /* emoji picker */
-    {MODKEY, XK_grave, spawn, {.v = (const char *[]){"dmenuunicode", NULL}}},
+
+    {MODKEY, XK_grave, spawn, SHCMD("~/.local/bin/dmenuunicode")},
     /* Toggle fullscreen */
     {MODKEY, XK_f, togglefullscr, {0}},
 
@@ -357,13 +369,15 @@ static Key keys[] = {
 
     /* [VIDEO - PICS] */
     /* Take a screenshot */
-    {0, XK_Print, spawn,
-     SHCMD("cd ~/Pictures && scrot -q 100 -p "
-           "'Screenshot-%d%b%4Y-%a-%H-%M-%S.png'")},
+    // {0, XK_Print, spawn,
+    //  SHCMD("cd ~/Pictures && scrot -q 100 -p "
+    //        "'Screenshot-%d%b%4Y-%a-%H-%M-%S.png'")},
     /* multi tool for screenshots */
-    {ShiftMask, XK_Print, spawn, {.v = (const char *[]){"maimpick", NULL}}},
+
+    {SUPERKEY, XK_r, spawn, SHCMD("~/.local/bin/dmenurecord")},
     /* multi tool for screen recording */
-    {MODKEY, XK_Print, spawn, {.v = (const char *[]){"dmenurecord", NULL}}},
+
+    {MODKEY, XK_Print, spawn, SHCMD("~/.local/bin/maimpick")},
     /* stop recording */
     {MODKEY,
      XK_Delete,
@@ -378,9 +392,9 @@ static Key keys[] = {
      SHCMD("rofi -show-icons -lines 12 -padding 18 -width 60 -location 0 -show "
            "drun -sidebar-mode -columns 3 -font 'Iosevka 12'")}, */
     /* Open file manager */
-    {MODKEY | ShiftMask, XK_f, spawn, SHCMD("thunar")},
+    {MODKEY | ShiftMask, XK_f, spawn, SHCMD("dolphin")},
     /* Open Librewolf */
-    {MODKEY | ShiftMask, XK_w, spawn, SHCMD("/usr/bin/librewolf")},
+    {MODKEY | ShiftMask, XK_w, spawn, SHCMD("/usr/bin/firefox")},
 
     /* [SPECIAL KEYS] */
     /* [AUDIO] */
@@ -444,8 +458,8 @@ static Key keys[] = {
 
     /* [VIDEO] */
     /* Toggle screenkey */
-    {MODKEY | ShiftMask, XK_Print, spawn,
-     SHCMD("killall screenkey || screenkey &")},
+    // {MODKEY | ShiftMask, XK_Print, spawn,
+    //  SHCMD("killall screenkey || screenkey &")},
     {0, XF86XK_Tools, spawn, SHCMD("killall screenkey || screenkey &")},
     /* When Caps Lock is pressed, update the bar */
     {0, XK_Caps_Lock, spawn, SHCMD("kill -36 dwmblocks")},
@@ -462,11 +476,11 @@ static Key keys[] = {
     /* These keybindings will be used to launch scripts */
     /* [MOD-BOUND] */
     /* change languages */
-    {MODKEY, XK_Escape, spawn, SHCMD("~/.local/bin/kbselect")},
+    {SUPERKEY, XK_space, spawn, SHCMD("~/.local/bin/kbselect")},
     /* choose and open pdfs from ~/Desktop/pdfs folder */
     {MODKEY | ShiftMask, XK_p, spawn, SHCMD("~/.local/bin/pdfsread")},
     /* system functions(restart,poweroff etc) */
-    {MODKEY, XK_BackSpace, spawn, {.v = (const char *[]){"sysact", NULL}}},
+    {MODKEY, XK_BackSpace, spawn, SHCMD("~/.local/bin/sysact")},
     /* youtube-dlp youtube download video from link in clipboard */
     {MODKEY | ShiftMask, XK_y, spawn, SHCMD("~/.local/bin/yt-download")},
     /* torrent add torrent from link in clipboard */
@@ -509,7 +523,6 @@ static Button buttons[] = {
     {ClkClientWin, MODKEY, Button1, moveorplace, {.i = 1}},
     {ClkClientWin, MODKEY, Button2, defaultgaps, {0}},
     {ClkClientWin, MODKEY, Button3, resizemouse, {0}},
-    {ClkClientWin, MODKEY | ShiftMask, Button3, dragcfact, {0}},
     {ClkClientWin, MODKEY, Button4, incrgaps, {.i = +1}},
     {ClkClientWin, MODKEY, Button5, incrgaps, {.i = -1}},
     {ClkTagBar, 0, Button1, view, {0}},

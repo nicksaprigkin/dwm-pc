@@ -1,0 +1,31 @@
+#!/bin/sh
+# works on any init system
+# requirements: dmenu, xorg-setxkbmap
+# edited it to select only greek ,russian, us
+# here is the old commadn for all langs kb_choice="$(awk '/! layout/{flag=1; next} /! variant/{flag=0} flag {print $2, "- " $1}' /usr/share/X11/xkb/rules/base.lst | dmenu -l 15)"
+#
+kb="$(setxkbmap -query | grep -oP 'layout:\s*\K\w+')" || exit 1
+
+
+# Check if Transmission daemon is active
+transmission_active=$(ps aux | grep '[t]ransmission-daemon' | awk '{print $11}')
+
+#added this to have correct spacing between the modules(because i added a space at the start for beauty)
+if [ -n "$transmission_active" ]; then
+	echo "$kb"
+else
+	echo " $kb"
+fi
+
+case $BLOCK_BUTTON in
+	1) kb_choice="$(awk '/! layout/{flag=1; next} /! variant/{flag=0} flag {if ($1 == "us" || $1 == "ru" || $1 == "gr") print $2, "- " $1}' /usr/share/X11/xkb/rules/base.lst | dmenu -l 15)"
+	[ -z "$kb_choice" ] && exit 0
+	kb="$(echo "$kb_choice" | awk '{print $3}')"
+	setxkbmap "$kb"
+	pkill -RTMIN+30 "${STATUSBAR:-dwmblocks}";;
+	3) notify-send "⌨  Keyboard/language module" "$(printf "%s" "\- Current layout: $(setxkbmap -query | grep -oP 'layout:\s*\K\w+')")
+- Left click to change keyboard.";;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+

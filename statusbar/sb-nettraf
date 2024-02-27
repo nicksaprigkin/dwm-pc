@@ -1,0 +1,42 @@
+#!/bin/sh
+# modified lukes smith nettraf
+# Module showing network traffic. Shows received and transmitted traffic if its above a threshold 
+# by changing the icon. Left click opens bmon, right click shows a notification with the traffic
+
+case $BLOCK_BUTTON in
+	1) setsid -f "$TERMINAL" -e bmon ;;
+	3) notify-send "🌐 Network traffic module" "🔻: Traffic received
+🔺: Traffic transmitted" ;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+update() {
+    sum=0
+    for arg; do
+        read -r i < "$arg"
+        sum=$(( sum + i ))
+    done
+    cache=/tmp/${1##*/}
+    [ -f "$cache" ] && read -r old < "$cache" || old=0
+    printf %d\\n "$sum" > "$cache"
+    printf %d\\n $(( sum - old ))
+}
+
+rx=$(update /sys/class/net/[ew]*/statistics/rx_bytes)
+tx=$(update /sys/class/net/[ew]*/statistics/tx_bytes)
+# Set threshold values for high traffic
+rx_threshold=5000000  # 5MB
+tx_threshold=1000000  # 1MB
+
+icon=" "
+# Check if RX is high and display the appropriate icon
+if [ "$rx" -ge "$rx_threshold" ]; then
+    icon="󰤦 "
+fi
+
+# Check if TX is high and display the appropriate icon
+if [ "$tx" -ge "$tx_threshold" ]; then
+    icon="󰤧 "
+fi
+
+printf "$icon"

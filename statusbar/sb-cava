@@ -1,0 +1,55 @@
+#!/bin/bash
+#cava module for dwmblocks by me displays the cava output in the status bar with 4 bars(you can chnage the number of bars)
+#
+#
+
+cmd="${0%/*}/sb-musicplayers $1" # have this in the same folder
+output_text="$($cmd)"
+
+# Define the path for the temporary file for cava output
+temp_file="/tmp/dwmblocks_cava_output"
+
+# Check if cava is already running
+if pgrep -x "cava" > /dev/null; then
+    if [[ "$output_text" == "no audio" ]] || [[ "$output_text" == *ps ]]; then
+        exit 0
+    else
+        cava_text=$(cat /tmp/dwmblocks_cava_output 2>/dev/null || echo "0")
+        printf "%s" "$cava_text"
+    fi
+
+else
+    bar="▁▂▃▄▅▆▇█"
+    dict="s/;//g;"
+
+    # creating "dictionary" to replace char with bar
+    i=0
+    while [ $i -lt ${#bar} ]; do
+        # Insert a space only after the bar character, not before
+        dict="${dict}s/$i/${bar:$i:1} /g;"
+        i=$((i + 1))
+    done
+
+    # write cava config
+    config_file="/tmp/dwmblocks_cava_config"
+    echo "
+    [general]
+    bars = 4
+    sensitivity = 90
+
+    [output]
+    method = raw
+    raw_target = /dev/stdout
+    data_format = ascii
+    ascii_max_range = 7
+    " > $config_file
+
+    # read stdout from cava, process it, and write to temporary file
+    cava -p $config_file | while read -r line; do
+        # Process the line to replace numbers with bar characters, adding only one space after each bar
+        processed_line=$(echo "$line" | sed "$dict")
+        echo "$processed_line" > "$temp_file"
+    done &
+fi
+
+

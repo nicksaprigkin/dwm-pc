@@ -2,10 +2,14 @@
 /* Default settings; can be overriden by command line. */
 
 static int topbar = 1; /* -b  option; if 0, dmenu appears at bottom     */
+static int fuzzy = 1;  /* -F  option; if 0, dmenu doesn't use fuzzy matching  */
+
+static int centered = 1;     /* -c option; centers dmenu on screen */
+static int min_width = 1700; /* minimum width when centered */
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-    "monospace:size=24",
-    "NotoColorEmoji:pixelsize=22:antialias=true:autohint=true"};
+    "FiraCode Nerd Font:size=14",
+    "NotoColorEmoji:pixelsize=18:antialias=true:autohint=true"};
 static const unsigned int bgalpha = 0xe0;
 static const unsigned int fgalpha = OPAQUE;
 static const char *prompt =

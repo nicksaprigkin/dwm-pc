@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# my verion of forecast script by luke smith
+# added current temp and it just display a cloud icon
+# Displays today's precipitation chance, daily low, high, and current temperature on left click
+
+url="${WTTRURL:-wttr.in}"
+weatherreport="${XDG_CACHE_HOME:-$HOME/.cache}/weatherreport"
+# Get a weather report from 'wttr.in' and save it locally.
+timeout --signal=1 2s curl -sf "$url/$LOCATION" > "$weatherreport" || exit 1;
+
+# Added a function to get the current temperature
+getcurrenttemp() {
+	timeout --signal=1 2s curl -sf "wttr.in/${LOCATION}?format=%t" | sed 's/[+m]//g' || exit 1; # current temp in °C plus not + at start of temp with sed by me
+}
+
+# Forecast should be updated only once a day.
+checkforecast() {
+	[ -s "$weatherreport" ] && [ "$(stat -c %y "$weatherreport" 2>/dev/null |
+		cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ]
+}
+
+getprecipchance() {
+	echo "$weatherdata" | sed '16q;d' |
+		grep -wo "[0-9]*%" |
+		sort -rn |
+		head -1q
+}
+
+getdailyhighlow() {
+	echo "$weatherdata" | sed '13q;d' |
+		grep -o "m\\([-+]\\)*[0-9]\\+" |
+		sed 's/[+m]//g' |
+		sort -g |
+		sed -e 1b -e '$!d'
+}
+
+
+readfile() { weatherdata="$(cat "$weatherreport")" ;}
+current_temp=$(getcurrenttemp)
+
+showweather() {
+	printf "" 
+}
+
+case $BLOCK_BUTTON in
+    1)
+        readfile  # Ensure weather data is read before using it
+        precip_chance=$(getprecipchance)
+        daily_high_low=($(getdailyhighlow))  # Capture output as an array
+        current_temp=$(getcurrenttemp) # Get current temperature
+        
+        daily_low=${daily_high_low[0]}
+        daily_high=${daily_high_low[1]}
+
+        notify-send "Weather Forecast" "🌡️ Current Temperature: $current_temp\n☔ Precipitation: $precip_chance\n🥶 Daily Low: $daily_low°\n🌞 Daily High: $daily_high°"
+        ;;
+	2) getforecast && showweather ;;
+	3) notify-send "Weather module" "\- Left click for full forecast.
+- Middle click to update forecast.
+☔: Chance of rain/snow
+🥶: Daily low
+🌞: Daily high" ;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+checkforecast || getforecast
+
+showweather
+
