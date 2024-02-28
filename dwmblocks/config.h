@@ -5,8 +5,11 @@ static const Block blocks[] = {
     /*{"", "sb-pacpackages", 0, 8},*/
     {"", "cat /tmp/recordingicon 2>/dev/null", 0, 9},
     {"", "sb-music-scroll", 1, 24},
-    // {"", "sb-cava2", 1, 17},
-    //   {"", "sb-play-btns", 0, 26},
+    //
+    // if you want cava comment top and uncomment the 2 below
+    //{"", "sb-cava", 1, 17},
+    //{"", "sb-music-no-scroll", 1, 24},
+    //
     /*{"",	"sb-tasks",	10,	26},*/ /* pc tasks*/
     /*{"",	"sb-news",		0,	6},*/
     /* {"",	"sb-price xmr-btc \"Monero to Bitcoin\" 🔒 25",	9000,	25}, */

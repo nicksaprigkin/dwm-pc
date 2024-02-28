@@ -3,7 +3,7 @@
 #
 #
 
-cmd="${0%/*}/sb-musicplayers $1" # have this in the same folder
+cmd="${0%/*}/sb-mprisplayers $1" # have this in the same folder
 output_text="$($cmd)"
 
 # Define the path for the temporary file for cava output
