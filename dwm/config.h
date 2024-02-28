@@ -289,15 +289,15 @@ static Key keys[] = {
     {MODKEY, XK_F5, togglescratch, {.ui = 2}},
     {MODKEY | ShiftMask, XK_F5, togglescratch, {.ui = 3}},
 
-    {MODKEY, XK_F6, spawn,
-     SHCMD("mpv --untimed --no-cache --no-osc --no-input-default-bindings "
-           "--profile=low-latency --input-conf=/dev/null --title=webcam $(ls "
-           "/dev/video[0,2,4,6,8] | tail -n 1)")},
-    {MODKEY, XK_F6, spawn, {.v = (const char *[]){"torwrap", NULL}}},
-    /* Show webcam not lukes
+    // {MODKEY, XK_F6, spawn,
+    //  SHCMD("mpv --untimed --no-cache --no-osc --no-input-default-bindings "
+    //        "--profile=low-latency --input-conf=/dev/null --title=webcam $(ls
+    //        "
+    //        "/dev/video[0,2,4,6,8] | tail -n 1)")},
+    // Show webcam not lukes
     {MODKEY, XK_F7, spawn,
      SHCMD("mpv av://v4l2:/dev/video0 --title=webcam /dev/video0 || "
-           "notify-send -u critical 'Webcam' 'Could not open webcam!'")}, */
+           "notify-send -u critical 'Webcam' 'Could not open webcam!'")},
 
     {MODKEY, XK_F7, spawn, {.v = (const char *[]){"td-toggle", NULL}}},
     {MODKEY, XK_F8, spawn, {.v = (const char *[]){"mailsync", NULL}}},
