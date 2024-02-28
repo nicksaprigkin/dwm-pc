@@ -1,0 +1,9 @@
+# vim: filetype=neomuttrc
+source /usr/share/mutt-wizard/mutt-wizard.muttrc
+source /home/jesusisking/.config/mutt/accounts/nikos.saprigin@gmail.com.muttrc
+source /home/jesusisking/.config/neomutt/colors/neomutt-color.conf
+macro index,pager i1 '<sync-mailbox><enter-command>source /home/jesusisking/.config/mutt/accounts/nikos.saprigin@gmail.com.muttrc<enter><change-folder>!<enter>;<check-stats>' "switch to nikos.saprigin@gmail.com"
+macro index,pager i2 '<sync-mailbox><enter-command>source /home/jesusisking/.config/mutt/accounts/sdi2100169@di.uoa.gr.muttrc<enter><change-folder>!<enter>;<check-stats>' "switch to sdi2100169@di.uoa.gr"
+
+
+

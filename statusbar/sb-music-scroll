@@ -10,7 +10,7 @@
 # *** If you have a problem where the text overflows to the right and then goes back to normal again, increase the CMDLENGTH in dwmblocks.c to a higher number or decrease the max_width below to a smaller number ***
 #
 
-cmd="${0%/*}/sb-musicplayers $1" # Path to the sb-musicplayers script put it in the same folder as this script
+cmd="${0%/*}/sb-mprisplayers $1" # Path to the sb-musicplayers script put it in the same folder as this script
 position_file="/tmp/scroll_position.txt"
 max_width=30  # Maximum display width for the text
 padding=$(printf ' %.0s' {1..8})  # Adjust padding as needed
@@ -22,10 +22,27 @@ current_position=$(cat "$position_file" 2>/dev/null || echo "0")
 output_text="$($cmd)"
 player_name="$($cmd "PLAYER" "icon")"
 
-# Retrieve the current artist and title using playerctl
+# title for spotify xprop name
 artist=$(playerctl --player=spotify metadata artist);
 title=$(playerctl --player=spotify metadata title);
 spot_title="${artist} - ${title}";
+# regex titles are done because search in xdotool uses posix regular expression whihch have special characters which are the punctuation characters
+# and here and in the other regex titles we just remove the punctuation and replace with a . so all the titles work so basically like doing a exact search!
+regex_spot_title=$(echo "$spot_title" | tr "[:punct:]" ".");
+
+# title for mpd xprop name
+current_song="$(mpc current)";
+regex_mpc_title=$(echo "$current_song" | tr "[:punct:]" ".");
+
+# title for broswer xprop name (works for firefox at least)
+# this is is done for if we have more than one firefox windows with youtube so it finds the correct one
+extract_meta() {
+    grep "$1\W" <<< "$meta" | awk '{$1=$2=""; print $0}' | sed 's/^ *//; s/; */;/g' | paste -s -d/ -
+}
+
+meta=$(playerctl -p "$1" metadata);
+title_browser=$(extract_meta title);
+regex_browser_title=$(echo "$title_browser" | tr "[:punct:]" ".");
 
 case $BLOCK_BUTTON in
     1)
@@ -39,30 +56,41 @@ case $BLOCK_BUTTON in
             "twitch") window_search="twitch" ;;
             "soundcloud") window_search="SoundCloud" ;;
             "netflix") window_search="netflix" ;;
+            "pip") window_search="pip";;
+            "vlc") window_search="vlc";;
             *) window_search="" ;;
         esac
         # with --class for some reason it wasnt focusing on spotify when it was floating
-        # so i use --name when a song is playing if you xprop the name is going to become from spotify to the song name
+        # so i use --name when a song is playing if you xprop when song is playing the name is going to become from spotify to the song name
+        # *** you can uncomment keys lines for pause on click
         if [ "$window_search" == "spotify" ]; then
-            xdotool windowactivate --sync $(xdotool search --name "$spot_title") key space
+            xdotool windowactivate --sync $(xdotool search --name "$regex_spot_title") #key space
         elif [ "$window_search" == "yt" ]; then
-            xdotool windowactivate --sync $(xdotool search --name "YouTube") key space
+            # works for firefox at least
+            xdotool windowactivate --sync $(xdotool search --name "$regex_browser_title - Youtube") #key space
+        elif [ "$window_search" == "pip" ]; then
+            # works for firefox at least
+            xdotool windowactivate --sync $(xdotool search --name --class --classname "Picture-in-Picture") #key space
         elif [ "$window_search" == "mpv" ]; then
-            xdotool windowactivate --sync $(xdotool search --class "mpv") key space
+            xdotool windowactivate --sync $(xdotool search --class "mpv") #key space
         elif [ "$window_search" == "mpd" ]; then
-            current_song="$(mpc current)"; # found it with xprop ncmpcpp uses the song name as the window name
-            xdotool windowactivate --sync $(xdotool search --name "$current_song") key p # pause
+            xdotool windowactivate --sync $(xdotool search --name "$regex_mpc_title") #key p 
         elif [ "$window_search" == "twitch" ]; then
-            xdotool windowactivate --sync $(xdotool search --name "Twitch") key space
+            xdotool windowactivate --sync $(xdotool search --name "Twitch") #key space
         elif [ "$window_search" == "SoundCloud" ]; then
-            xdotool windowactivate --sync $(xdotool search --name "SoundCloud") key space
+            xdotool windowactivate --sync $(xdotool search --name "SoundCloud") #key space
         elif [ "$window_search" == "netflix" ]; then
-            xdotool windowactivate --sync $(xdotool search --name "Netflix") key space
+            xdotool windowactivate --sync $(xdotool search --name "Netflix") #key space
+        elif [ "$window_search" == "vlc" ]; then
+            # havent checked if works (check with xprop to fix if wrong!)
+            xdotool windowactivate --sync $(xdotool search --class "vlc") #key space
+
         else
             playerctl play-pause
         fi
         ;;
-        3) 
+    3)
+
         music_dir="$HOME/Music"
         video_dir="$HOME/Videos"
         if [ "$player_name" == "spotify" ]; then
@@ -77,7 +105,7 @@ case $BLOCK_BUTTON in
         fi
 
         if [ "$player_name" == "youtube" ]; then
-            xdotool search --name "Youtube" windowactivate --sync key --clearmodifiers ctrl+l ctrl+c
+            xdotool search --name "$regex_browser_title - Youtube" windowactivate --sync key --clearmodifiers ctrl+l ctrl+c
             url="$(xclip -selection clipboard -o)"
             #setsid -w -f st -c "fSt" -e yt-dlp "$url" -o "$video_dir/%(title)s.%(ext)s";
             setsid -w -f st -c "fSt" -e yt-dlp -f "bestvideo[height=720]+bestaudio/best" "$url" -o "$video_dir/%(title)s.%(ext)s";

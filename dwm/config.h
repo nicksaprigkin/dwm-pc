@@ -107,6 +107,7 @@ static const Rule rules[] = {
        isterminal noswallow  monitor */
     {NULL, NULL, "PlayOnLinux", 0, 1, 0, 0, -1},
     {NULL, NULL, "cpupower-gui", 0, 1, 0, 0, -1},
+    {NULL, NULL, "pavucontrol", 0, 1, 0, 0, -1},
     {TERMCLASS, NULL, NULL, 0, 0, 1, 0, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1},
     // scratchpads ***
@@ -279,7 +280,7 @@ static Key keys[] = {
     {MODKEY, XK_F1, spawn,
      SHCMD("groff -mom /usr/local/share/dwm/larbs.mom -Tpdf | zathura -")},
     {MODKEY, XK_F2, spawn,
-     SHCMD(TERMINAL " -e pulsemixer; kill -44 $(pidof dwmblocks)")},
+     SHCMD(TERMINAL " -e pavucontrol; kill -44 $(pidof dwmblocks)")},
 
     {MODKEY, XK_F3, spawn, SHCMD("~/.local/bin/music-launch")},
     /* Kill a window */

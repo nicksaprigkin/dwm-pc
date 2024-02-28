@@ -1,0 +1,70 @@
+#!/bin/bash
+# by nick sap
+
+# Prompt the user using dmenu with vertical options
+quality_choice=$(echo -e "Best Quality\nNormal Quality\nShit Quality" | dmenu -p "Choose video quality:" -l 3) || exit 1
+
+# Check if the clipboard has content
+if [ -z "$(xclip -selection clipboard -o)" ]; then
+    notify-send "Error" "Clipboard is empty."
+    exit 1
+fi
+
+# Set the output directory
+output_dir="$HOME/Videos/yt"
+
+# Choose a directory saving option using dmenu
+save_choice=$(echo -e "Save in yt\nSave in a folder in yt\nSave in created folder in yt" | dmenu -p "Choose saving option:" -l 3) || exit 1
+
+# Prompt the user for a folder name if the choice is "Type and create a folder in yt"
+if [ "$save_choice" == "Save in created folder in yt" ]; then
+    folder_name=$(echo "" | dmenu -p "Type a folder name:")
+    if [ -z "$folder_name" ]; then
+        notify-send "Error" "Folder name cannot be empty."
+        exit 1
+    fi
+    output_dir="$output_dir/$folder_name"
+elif [ "$save_choice" == "Save in a folder in yt" ]; then
+    # Display existing folders in the yt directory for the user to choose from
+    existing_folders=$(find "$output_dir" -maxdepth 1 -type d -exec basename {} \; | grep -v "yt" | dmenu -p "Choose a folder:" -l 10)
+    if [ -z "$existing_folders" ]; then
+        notify-send "Error" "No existing folders selected."
+        exit 1
+    fi
+    output_dir="$output_dir/$existing_folders"
+fi
+
+# Create the output directory if it doesn't exist
+mkdir -p "$output_dir"
+
+# Main logic
+case "$quality_choice" in
+    "Best Quality")
+        video_url=$(xclip -selection clipboard -o)  # Assuming the video URL is in the clipboard
+        if yt-dlp "$video_url" -o "$output_dir/%(title)s.%(ext)s"; then
+            notify-send "Success" "Video downloaded to: $output_dir"
+        else
+            notify-send "Error" "Failed to download video."
+        fi
+        ;;
+    "Normal Quality")
+        video_url=$(xclip -selection clipboard -o)  # Assuming the video URL is in the clipboard
+        if yt-dlp "bestvideo[height=720]+bestaudio/best" "$video_url" -o "$output_dir/%(title)s_medium.%(ext)s"; then
+            notify-send "Success" "Video downloaded to: $output_dir"
+        else
+            notify-send "Error" "Failed to download video."
+        fi
+        ;;
+    "Shit Quality")
+        video_url=$(xclip -selection clipboard -o)  # Assuming the video URL is in the clipboard
+        if yt-dlp -f "worstvideo[height=360]+bestaudio/best" "$video_url" -o "$output_dir/%(title)s_worse.%(ext)s"; then
+            notify-send "Success" "Video downloaded to: $output_dir"
+        else
+            notify-send "Error" "Failed to download video."
+        fi
+        ;;
+    *)
+        notify-send "Error" "Invalid choice."
+        exit 1
+        ;;
+esac

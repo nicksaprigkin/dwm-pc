@@ -1,0 +1,22 @@
+# vim: filetype=neomuttrc
+# muttrc file for account sdi2100169@di.uoa.gr
+set realname = "sdi2100169"
+set from = "sdi2100169@di.uoa.gr"
+set sendmail = "msmtp -a sdi2100169@di.uoa.gr"
+alias me sdi2100169 <sdi2100169@di.uoa.gr>
+set folder = "/home/jesusisking/.local/share/mail/sdi2100169@di.uoa.gr"
+set header_cache = /home/jesusisking/.cache/mutt-wizard/sdi2100169@di.uoa.gr/headers
+set message_cachedir = /home/jesusisking/.cache/mutt-wizard/sdi2100169@di.uoa.gr/bodies
+set mbox_type = Maildir
+set hostname = "di.uoa.gr"
+source /usr/share/mutt-wizard/switch.muttrc
+set spoolfile = +INBOX
+set postponed = +Drafts
+set trash = +Trash
+set record = +Sent
+
+macro index o "<shell-escape>mw -y sdi2100169@di.uoa.gr<enter>" "run mbsync to sync sdi2100169@di.uoa.gr"
+macro index \eg "<enter-command>unset wait_key<enter><shell-escape>gpg --list-secret-keys; printf 'Enter email ID of user to publish: '; read eID; printf 'Enter fingerprint of GPG key to publish: '; read eFGPT; /usr/libexec/gpg-wks-client --create \$eFGPT \$eID | msmtp --read-envelope-from --read-recipients -a sdi2100169@di.uoa.gr<enter>"  "publish GPG key to WKS provider"
+macro index \eh "<pipe-message>/usr/libexec/gpg-wks-client --receive | msmtp --read-envelope-from --read-recipients -a sdi2100169@di.uoa.gr<enter>" "confirm GPG publication"
+
+mailboxes "=INBOX.Drafts" "=INBOX.Junk" "=INBOX.Projects" "=INBOX.Sent" "=INBOX.Trash" "=INBOX.no-reply" "=Announcements.CIVIS" "=Announcements.Community" "=Announcements.Events" "=DI.Conferences" "=DI.Projects" "=DI.Students" "=Projects"

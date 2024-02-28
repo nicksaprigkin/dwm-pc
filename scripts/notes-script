@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Define the directory where you want to create the note. Change this to your preferred directory.
+NOTE_DIRECTORY="$HOME/Documents/SecondBrain/notes"
+
+# Format the current date as YYYY-MM-DD. Change this format if you prefer a different one.
+CURRENT_DATE=$(date "+%Y-%m-%d")
+
+# Define the filename using the current date.
+FILENAME="note-${CURRENT_DATE}.md"
+
+# Full path for the new file.
+FULL_PATH="${NOTE_DIRECTORY}/${FILENAME}"
+
+# Create the directory if it doesn't exist.
+mkdir -p "$NOTE_DIRECTORY"
+
+# Check if the file already exists. If not, create it and add the initial content.
+if [ ! -f "$FULL_PATH" ]; then
+    echo -e "# TODO:\n1)\n2)\n3)\n4)\n5)\n\n\n\n# NOTES:" > "$FULL_PATH"
+fi
+
+# Open Neovim with the new or existing file.
+nvim "$FULL_PATH"

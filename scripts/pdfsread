@@ -1,0 +1,51 @@
+#!/bin/sh
+# By nick sap
+#open pdf file from /Desktop/pdfs or from folders inside that
+
+# Path to the PDF folder
+pdf_folder=~/Documents/pdfs
+
+# Get the list of folders and PDF files in the PDF folder only names not whole path
+item_list=$(find "$pdf_folder" -maxdepth 1 \( -type d -o -name '*.pdf' \) -exec basename {} \; 2>/dev/null | grep -v '^pdfs$')
+
+# Check if there are folders or PDF files
+if [ -z "$item_list" ]; then
+    notify-send "No folders or PDF files found in $pdf_folder"
+    exit 1
+fi
+
+# Display the list of folders and PDF files to the user using dmenu
+selected_item=$(echo "$item_list" | awk '/\.pdf$/ { print $0 } ; /\.pdf$/ && !done { print ""; done=1 } ; /\.pdf$/ { next } { print $0 "/" }' | grep -v '^$' | dmenu -i -p "Choose a folder or PDF file (ESC to cancel)" -l 20)
+
+# Check if the user canceled the item selection
+if [ -z "$selected_item" ]; then
+    notify-send "Operation canceled by user."
+    exit 0
+fi
+
+# If the selected item is a folder, get the list of PDF files in that folder
+if [ -d "$pdf_folder/$selected_item" ]; then
+    pdf_list=$(find "$pdf_folder/$selected_item" -maxdepth 1 -name '*.pdf' -exec basename {} \; 2>/dev/null)
+    if [ -z "$pdf_list" ]; then
+        notify-send "Folder $pdf_folder/$selected_item is empty."
+        exit 1
+    fi
+    # Display the list of PDF files in the selected folder
+    selected_pdf=$(echo "$pdf_list" | dmenu -i -p "Read which PDF file? (ESC to cancel)" -l 20)
+    selected_path="$pdf_folder/$selected_item/$selected_pdf"
+else
+    # If the selected item is a PDF file, set it as the selected PDF
+    selected_pdf="$pdf_folder/$selected_item"
+    selected_path="$selected_pdf"
+fi
+
+# Check if the user canceled the PDF selection
+if [ -z "$selected_pdf" ]; then
+    notify-send "Operation canceled by user."
+    exit 0
+fi
+
+# Open the selected PDF file using the default PDF viewer (e.g., zathura)
+zathura "$selected_path" || notify-send "Failed to open PDF file: $selected_pdf"
+
+

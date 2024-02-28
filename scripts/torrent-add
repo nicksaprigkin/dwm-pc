@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Check if the clipboard has content
+magnet_link=$(xclip -selection clipboard -o)
+if [ -z "$magnet_link" ]; then
+    notify-send "Error" "Clipboard is empty."
+    exit 1
+fi
+
+# Prompt the user using dmenu to choose between Magnet Link and Torrent File
+selection=$(echo -e "Magnet Link\nTorrent File" | dmenu -p "Choose an option:" -l 2) || exit 1
+
+case "$selection" in
+    "Magnet Link")
+        # Add the magnet link to Transmission
+        if transmission-remote -a "$magnet_link"; then
+            notify-send "Success" "Magnet link added to Transmission."
+        else
+            notify-send "Error" "Failed to add magnet link to Transmission. (make sure the daemon is running)"
+        fi
+        ;;
+    "Torrent File")
+        # Prompt the user for a torrent file
+        torrent_file=$(dmenu_path | dmenu -l 10 -p "Choose a Torrent File:") || exit 1
+        
+        # Check if a torrent file is chosen
+        if [ -n "$torrent_file" ]; then
+            # Add the torrent file to Transmission
+            if transmission-remote -a "$torrent_file"; then
+                notify-send "Success" "Torrent file added to Transmission."
+            else
+                notify-send "Error" "Failed to add torrent file to Transmission. (make sure the daemon is running)"
+            fi
+        else
+            notify-send "Error" "No torrent file selected."
+        fi
+        ;;
+    *)
+        notify-send "Error" "Invalid choice."
+        exit 1
+        ;;
+esac

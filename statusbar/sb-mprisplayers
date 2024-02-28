@@ -1,0 +1,108 @@
+#!/bin/bash
+# credits to 0jdxt/polybar-mpris github repo for the script this is just a modified version
+
+# script that detects the currently playing audio and returns the metadata or what player is playing to choose an
+# appropriate icon.
+#
+#
+# install playerctl and mpv and mpc. for mpd do yay -S mpv-mpris mpdris2 mpd-mpris-bin
+# make sure to enable the mpd-mpris.service
+#
+#
+
+extract_meta() {
+    grep "$1\W" <<< "$meta" | awk '{$1=$2=""; print $0}' | sed 's/^ *//; s/; */;/g' | paste -s -d/ -
+}
+
+# if "icon" given, determine icon. otherwise, print metadata
+get_info() {
+
+    if [ -z "$1" ]; then
+        echo "Usage: get_info PLAYER [icon]"
+        exit 1
+    fi
+
+    meta=$(playerctl -p "$1" metadata)
+
+    # get title
+    title=$(extract_meta title)
+    # if no title, try url e.g. vlc
+    if [ -z "$title" ]; then
+        title=$(extract_meta url)
+        title=$(urldecode "${title##*/}")
+    fi
+
+    # if not "icon", display information and return
+    if [ "$2" != "icon" ]; then
+        artist=$(extract_meta artist)
+        [ -z "$artist" ] && artist=$(extract_meta albumArtist)
+
+        if [ -n "$artist" ]; then
+            album=$(extract_meta album)
+            [ -n "$album" ] && echo -n "   $album "
+
+            echo -n " $artist  "
+        fi
+
+        # Append the play or pause symbol(pl - ps) based on player status
+        p_status=$(playerctl -p "$1" status 2>/dev/null)
+        if [ "$p_status" = "Playing" ]; then
+            echo "$title pl"
+        else
+            echo "$title ps"
+        fi
+        return 0
+    fi
+    # determine icon:
+    # if player name is recognised, use it
+    case "$1" in
+        spotify* | vlc | mpv | mpd) echo "$1";;
+        kdeconnect*) echo "kdeconnect";;
+        chromium* | firefox* | brave* | opera* | qutebrowser* | torbrowser* | epiphany* | midori* | falkon* | otter* | vivaldi* | waterfox* | palemoon* | seamonkey* | konqueror* | surf* | luakit* | uzbl* | jumanji* | netsurf* | dooble* | dillo* | links* | elinks* | lynx* | w3m* | edbrowse*)
+            # if a browser, search window titles:
+            regex_title=$(echo "$title" | tr "[:punct:]" ".")
+            windowname=$(xdotool search --name --class --classname "$regex_title" getwindowname 2>/dev/null)
+            # added picture in picture
+            windowname_pip=$(xdotool search --name --class --classname "Picture-in-Picture" getwindowname 2>/dev/null)
+            if [ "$windowname_pip" == "Picture-in-Picture" ]; then
+                echo "pip"
+            fi
+
+            case $windowname in
+                "") ;; # ignore if empty
+                # add anything you want to match here in the browser
+                *Netflix*) echo "netflix";;
+                *YouTube*) echo "youtube";;
+                *Twitch*) echo "twitch";;
+                *"Picture-in-Picture"*) echo "pip";; # ***
+                *"Prime Video"*) echo "prime";;
+                *"Corridor Digital"*) echo "corridor";;
+                *) echo "browser";;
+            esac;;
+        *) echo "none";;
+    esac
+}
+
+# manually go through players
+read -d'\n' -ra PLAYERS <<<"$(playerctl -l 2>/dev/null)"
+declare -a PAUSED
+for player in "${PLAYERS[@]}"; do
+    [ "$player" = "playerctld" ] && continue;
+
+    p_status=$(playerctl -p "$player" status 2>/dev/null)
+
+    # if we have one playing, we'll use it and EXIT
+    if [ "$p_status" = "Playing"  ]; then
+        get_info "$player" "$2"
+        exit 0;
+    fi
+
+    [ "$p_status" = "Paused" ] && PAUSED+=("$player")
+done
+
+# if we have a paused, show it otherwise assume there are no players or have all stopped
+if [ -n "${PAUSED[0]}" ]; then
+    get_info "${PAUSED[0]}" "$2"
+else
+    [ "$2" = icon ] && echo "none" || echo "no audio"
+fi
