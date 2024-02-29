@@ -4,9 +4,11 @@ My whole desktop setup:
 ### music/audio scroll dwmblocks status bar module for all players. 
 On left click focuses on the current window with the audio and on right click, if its spotify or youtube downloads the video or song. The scripts are in /statusbar/ the sb-mprisplayers and the sb-music-scroll
 
-https://github.com/nicksaprigkin/dwm-pc/assets/69307914/66b8328f-44c5-4263-b34e-fd4a6c54a4f1
+https://github.com/nicksaprigkin/dwm-pc/assets/69307914/4c16a6b4-653b-4f50-ad02-3108e3604e6f
+
 ### Example
-https://github.com/nicksaprigkin/dwm-pc/assets/69307914/e2b53dcd-f89b-4c76-bd8d-fcc1be632d19
+
+https://github.com/nicksaprigkin/dwm-pc/assets/69307914/7561f915-3ff7-4e0c-9fa1-3f8731f9f0b6
 
 ### nvim and tmux 
 
