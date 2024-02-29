@@ -295,7 +295,7 @@ static Key keys[] = {
     //        "
     //        "/dev/video[0,2,4,6,8] | tail -n 1)")},
     // Show webcam not lukes
-    {MODKEY, XK_F7, spawn,
+    {MODKEY, XK_F6, spawn,
      SHCMD("mpv av://v4l2:/dev/video0 --title=webcam /dev/video0 || "
            "notify-send -u critical 'Webcam' 'Could not open webcam!'")},
 
